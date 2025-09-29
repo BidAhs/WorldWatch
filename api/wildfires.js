@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
           title: event.title,
         })),
       )
-      .slice(50, 210);
+      
 
     res.json(result);
   } catch (err) {

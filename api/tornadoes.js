@@ -1,10 +1,7 @@
 const axios = require("axios");
 const { parse } = require("csv-parse/sync");
 
-let cachedData = [];
-
-// Function to fetch and cache data
-async function refreshTornadoes() {
+module.exports = async (req, res) => {
   try {
     const today = new Date();
     const urls = [];
@@ -39,17 +36,8 @@ async function refreshTornadoes() {
       }
     }
 
-    cachedData = allRecords;
-    console.log("Tornado data refreshed");
+    res.json(allRecords);
   } catch (err) {
-    console.error("Failed to refresh tornado data", err.message);
+    res.status(500).json({ error: "Failed to fetch tornadoes" });
   }
-}
-
-// Refresh every 5 minutes
-refreshTornadoes();
-setInterval(refreshTornadoes, 5 * 60 * 1000);
-
-module.exports = (req, res) => {
-  res.json(cachedData);
 };

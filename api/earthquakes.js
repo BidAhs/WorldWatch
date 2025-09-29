@@ -1,28 +1,17 @@
 const axios = require("axios");
 
-let cachedData = [];
-
-// Function to fetch and cache data
-async function refreshEarthquakes() {
+module.exports = async (req, res) => {
   try {
     const url =
       "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
     const { data } = await axios.get(url);
-    cachedData = data.features.map((f) => ({
+    const result = data.features.map((f) => ({
       lat: f.geometry.coordinates[1],
       lon: f.geometry.coordinates[0],
       mag: f.properties.mag,
     }));
-    console.log("Earthquake data refreshed");
+    res.json(result);
   } catch (err) {
-    console.error("Failed to refresh earthquake data", err.message);
+    res.status(500).json({ error: "Failed to fetch earthquakes" });
   }
-}
-
-// Refresh every 5 minutes
-refreshEarthquakes();
-setInterval(refreshEarthquakes, 5 * 60 * 1000);
-
-module.exports = (req, res) => {
-  res.json(cachedData);
 };

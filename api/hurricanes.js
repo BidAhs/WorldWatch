@@ -13,8 +13,8 @@ export default async function handler(req, res) {
         "https://eonet.gsfc.nasa.gov/api/v3/events?category=severeStorms";
       const { data } = await axios.get(url);
 
-      cachedData = data.events.flatMap((event) =>
-        event.geometry.map((geo) => ({
+      cachedData = data.events.flatMap(event =>
+        event.geometry.map(geo => ({
           lat: geo.coordinates[1],
           lon: geo.coordinates[0],
           title: event.title,

@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     try {
       const today = new Date();
       const urls = [];
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 2; i++) { // last 2 days only
         const d = new Date(today);
         d.setDate(today.getDate() - i);
         const y = d.getFullYear();
@@ -26,16 +26,18 @@ export default async function handler(req, res) {
         try {
           const { data } = await axios.get(url);
           const records = parse(data, { columns: true, skip_empty_lines: true });
-          allRecords = allRecords.concat(records.map((r) => ({
-            lat: parseFloat(r.LAT),
-            lon: parseFloat(r.LON),
-            location: r.LOCATION || "Unknown",
-            time: r.TIME || "N/A",
-          })));
+          allRecords = allRecords.concat(
+            records.map(r => ({
+              lat: parseFloat(r.LAT),
+              lon: parseFloat(r.LON),
+              location: r.LOCATION || "Unknown",
+              time: r.TIME || "N/A",
+            }))
+          );
         } catch {}
       }
 
-      cachedData = allRecords;
+      cachedData = allRecords.slice(0, 50); // max 50 tornadoes
       lastUpdated = now;
       console.log("Tornado data refreshed");
     } catch (err) {

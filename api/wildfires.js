@@ -11,15 +11,16 @@ export default async function handler(req, res) {
     try {
       const url = "https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires";
       const { data } = await axios.get(url);
+
       cachedData = data.events
-        .flatMap((event) =>
-          event.geometry.map((geo) => ({
+        .flatMap(event => 
+          event.geometry.map(geo => ({
             lat: geo.coordinates[1],
             lon: geo.coordinates[0],
             title: event.title,
           }))
         )
-        .slice(50, 210);
+        .slice(0, 100); // max 100 wildfires
       lastUpdated = now;
       console.log("Wildfire data refreshed");
     } catch (err) {

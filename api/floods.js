@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       const response = await fetch("https://floods.globalfloods.eu/api");
       const data = await response.json();
 
-      cachedData = data.items.map(f => ({
+      cachedData = (data.items || []).slice(0, 50).map(f => ({
         lat: f.latitude,
         lon: f.longitude,
         title: "Flood",

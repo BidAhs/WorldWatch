@@ -14,9 +14,9 @@ export default async function handler(req, res) {
       );
       const states = response.data.states || [];
       cachedData = states
-        .filter((s) => s[5] !== null && s[6] !== null)
-        .slice(0, 75)
-        .map((s) => ({
+        .filter(s => s[5] !== null && s[6] !== null)
+        .slice(0, 75) // planes API is already limited
+        .map(s => ({
           callsign: s[1] || "Unknown",
           lat: s[6],
           lon: s[5],

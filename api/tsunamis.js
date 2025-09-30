@@ -14,11 +14,12 @@ export default async function handler(req, res) {
       const text = await response.text();
       const result = await xml2js.parseStringPromise(text);
 
-      cachedData = result.feed.entry.map(e => ({
+      const events = result?.feed?.entry || [];
+      cachedData = events.slice(0, 20).map(e => ({
         lat: parseFloat(e["georss:point"][0].split(" ")[0]),
         lon: parseFloat(e["georss:point"][0].split(" ")[1]),
         title: e.title[0],
-        info: e.summary[0]
+        info: e.summary[0],
       }));
       lastUpdated = now;
       console.log("Tsunami data refreshed");

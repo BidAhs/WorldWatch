@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       const text = await response.text();
       const result = await xml2js.parseStringPromise(text);
 
-      cachedData = result.rss.channel[0].item.map((item) => ({
+      const items = result?.rss?.channel?.[0]?.item || [];
+      cachedData = items.slice(0, 20).map(item => ({
         title: item.title[0],
         link: item.link[0],
         pubDate: item.pubDate[0],

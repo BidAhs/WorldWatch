@@ -7,6 +7,9 @@ import { fetchTornadoes } from "../utils/fetchTornadoes";
 import { fetchWildfires } from "../utils/fetchWildfires";
 import { fetchHurricanes } from "../utils/fetchHurricanes";
 import { fetchPlanes } from "../utils/fetchPlanes";
+import { fetchVolcanoes } from "../utils/fetchVolcanoes";
+import { fetchFloods } from "../utils/fetchFloods";
+import { fetchTsunamis } from "../utils/fetchTsunamis";
 
 function Globe() {
   const mountRef = useRef(null);
@@ -15,13 +18,20 @@ function Globe() {
   const [wildfires, setWildfires] = useState([]);
   const [hurricanes, setHurricanes] = useState([]);
   const [planes, setPlanes] = useState([]);
+  const [volcanoes, setVolcanoes] = useState([]);
+  const [floods, setFloods] = useState([]);
+  const [tsunamis, setTsunamis] = useState([]);
 
   const uniqueHurricanes = new Set(hurricanes.map((h) => h.title)).size;
+
   const [showEarthquakes, setShowEarthquakes] = useState(true);
   const [showTornadoes, setShowTornadoes] = useState(true);
   const [showWildfires, setShowWildfires] = useState(true);
   const [showHurricanes, setShowHurricanes] = useState(true);
   const [showPlanes, setShowPlanes] = useState(true);
+  const [showVolcanoes, setShowVolcanoes] = useState(true);
+  const [showFloods, setShowFloods] = useState(true);
+  const [showTsunamis, setShowTsunamis] = useState(true);
 
   const [selectedInfo, setSelectedInfo] = useState(null);
 
@@ -46,7 +56,7 @@ function Globe() {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    mountRef.current.innerHTML = ""; 
+    mountRef.current.innerHTML = "";
     mountRef.current.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -70,10 +80,14 @@ function Globe() {
     const wGroup = new THREE.Group();
     const hGroup = new THREE.Group();
     const pGroup = new THREE.Group();
-    globe.add(eqGroup, tGroup, wGroup, hGroup, pGroup);
+    const vGroup = new THREE.Group();
+    const fGroup = new THREE.Group();
+    const tsGroup = new THREE.Group();
+    globe.add(eqGroup, tGroup, wGroup, hGroup, pGroup, vGroup, fGroup, tsGroup);
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+
     function onClick(e) {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -85,10 +99,14 @@ function Globe() {
         ...wGroup.children,
         ...hGroup.children,
         ...pGroup.children,
+        ...vGroup.children,
+        ...fGroup.children,
+        ...tsGroup.children,
       ]);
       if (hits.length) setSelectedInfo(hits[0].object.userData);
       else setSelectedInfo(null);
     }
+
     renderer.domElement.addEventListener("click", onClick);
 
     let frameId;
@@ -100,6 +118,7 @@ function Globe() {
     animate();
 
     async function updateData() {
+
       const eq = await fetchEarthquakes();
       setEarthquakes(eq);
       eqGroup.clear();
@@ -145,21 +164,6 @@ function Globe() {
         });
       }
 
-      const pls = await fetchPlanes();
-      setPlanes(pls);
-      pGroup.clear();
-      if (showPlanes) {
-        pls.forEach((p) => {
-          const m = new THREE.Mesh(
-            new THREE.SphereGeometry(0.04, 8, 8),
-            new THREE.MeshBasicMaterial({ color: 0xffff80 })
-          );
-          m.position.copy(latLonToVec3(p.lat, p.lon, 5.3));
-          m.userData = { type: "Plane", callsign: p.callsign, altitude: p.altitude };
-          pGroup.add(m);
-        });
-      }
-
       const fires = await fetchWildfires();
       const trimmed = fires.slice(100, 175);
       setWildfires(trimmed);
@@ -175,6 +179,66 @@ function Globe() {
           wGroup.add(m);
         });
       }
+
+      const pls = await fetchPlanes();
+      setPlanes(pls);
+      pGroup.clear();
+      if (showPlanes) {
+        pls.forEach((p) => {
+          const m = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffff80 })
+          );
+          m.position.copy(latLonToVec3(p.lat, p.lon, 5.3));
+          m.userData = { type: "Plane", callsign: p.callsign, altitude: p.altitude };
+          pGroup.add(m);
+        });
+      }
+
+      const vols = await fetchVolcanoes();
+      setVolcanoes(vols);
+      vGroup.clear();
+      if (showVolcanoes) {
+        vols.forEach((v) => {
+          const m = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xff69b4 }) 
+          );
+          m.position.copy(latLonToVec3(v.lat, v.lon, 5.35));
+          m.userData = { type: "Volcano", title: v.title || "Unknown", lat: v.lat, lon: v.lon };
+          vGroup.add(m);
+        });
+      }
+
+      const fls = await fetchFloods();
+      setFloods(fls);
+      fGroup.clear();
+      if (showFloods) {
+        fls.forEach((f) => {
+          const m = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x00ffff }) 
+          );
+          m.position.copy(latLonToVec3(f.lat, f.lon, 5.4));
+          m.userData = { type: "Flood", title: f.title || "Unknown", lat: f.lat, lon: f.lon };
+          fGroup.add(m);
+        });
+      }
+
+      const ts = await fetchTsunamis();
+      setTsunamis(ts);
+      tsGroup.clear();
+      if (showTsunamis) {
+        ts.forEach((t) => {
+          const m = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x800080 }) 
+          );
+          m.position.copy(latLonToVec3(t.lat, t.lon, 5.45));
+          m.userData = { type: "Tsunami", title: t.title || "Unknown", lat: t.lat, lon: t.lon };
+          tsGroup.add(m);
+        });
+      }
     }
 
     updateData();
@@ -184,61 +248,82 @@ function Globe() {
       clearInterval(timer);
       cancelAnimationFrame(frameId);
       renderer.domElement.removeEventListener("click", onClick);
-
       if (mountRef.current?.contains(renderer.domElement)) {
         mountRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [showEarthquakes, showTornadoes, showWildfires, showHurricanes, showPlanes]);
+  }, [
+    showEarthquakes,
+    showTornadoes,
+    showWildfires,
+    showHurricanes,
+    showPlanes,
+    showVolcanoes,
+    showFloods,
+    showTsunamis,
+  ]);
 
   const strongestEQ = earthquakes.length
     ? Math.max(...earthquakes.map((e) => e.mag))
     : 0;
 
-  return <>
-    <div style={{width:'100%',height:'100vh',position:'relative'}}>
-      <div ref={mountRef} style={{width:'100%',height:'100%'}}/>
-      <div style={{position:'absolute',top:20,left:20,fontSize:36,fontWeight:'bold',color:'white'}}>WorldWatch+</div>
-      <div style={{position:'absolute',top:80,right:20,background:'rgba(220,220,220,0.85)',padding:10,borderRadius:8,fontSize:20}}>
-        <strong>Filters</strong>
-        <div><label><input type='checkbox' checked={showEarthquakes} onChange={function(){setShowEarthquakes(!showEarthquakes)}}/> Earthquakes</label></div>
-        <div><label><input type='checkbox' checked={showTornadoes} onChange={function(){setShowTornadoes(!showTornadoes)}}/> Tornadoes</label></div>
-        <div><label><input type='checkbox' checked={showHurricanes} onChange={function(){setShowHurricanes(!showHurricanes)}}/> Hurricanes</label></div>
-        <div><label><input type='checkbox' checked={showWildfires} onChange={function(){setShowWildfires(!showWildfires)}}/> Wildfires</label></div>
-        <div><label><input type='checkbox' checked={showPlanes} onChange={function(){setShowPlanes(!showPlanes)}}/> Planes</label></div>
-
-        <div style={{marginTop:10}}><strong>Legend</strong></div>
-        <div><span style={{color:'#ff0000'}}>●</span> Earthquakes</div>
-        <div><span style={{color:'#0000ff'}}>●</span> Tornado</div>
-        <div><span style={{color:'#00ff00'}}>●</span> Hurricane</div>
-        <div><span style={{color:'#ffa500'}}>●</span> Wildfire</div>
-        <div><span style={{color:'#ffff80'}}>●</span> Plane</div>
-
-        <div style={{marginTop:10}}><strong>Data Summary</strong>
-          <div>Earthquakes: {earthquakes.length}</div>
-          <div>Strongest EQ: {strongestEQ}</div>
-          <div>Tornadoes: {tornadoes.length}</div>
-          <div>Hurricanes: {uniqueHurricanes}</div>
-          <div>Wildfires: {wildfires.length}</div>
-          <div>Planes: {planes.length}</div>
+  return (
+    <>
+      <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+        <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+        <div style={{ position: "absolute", top: 20, left: 20, fontSize: 36, fontWeight: "bold", color: "white" }}>
+          WorldWatch+
         </div>
+        <div style={{ position: "absolute", top: 80, right: 20, background: "rgba(220,220,220,0.85)", padding: 10, borderRadius: 8, fontSize: 20 }}>
+          <strong>Filters</strong>
+          <div><label><input type="checkbox" checked={showEarthquakes} onChange={() => setShowEarthquakes(!showEarthquakes)} /> Earthquakes</label></div>
+          <div><label><input type="checkbox" checked={showTornadoes} onChange={() => setShowTornadoes(!showTornadoes)} /> Tornadoes</label></div>
+          <div><label><input type="checkbox" checked={showHurricanes} onChange={() => setShowHurricanes(!showHurricanes)} /> Hurricanes</label></div>
+          <div><label><input type="checkbox" checked={showWildfires} onChange={() => setShowWildfires(!showWildfires)} /> Wildfires</label></div>
+          <div><label><input type="checkbox" checked={showPlanes} onChange={() => setShowPlanes(!showPlanes)} /> Planes</label></div>
+          <div><label><input type="checkbox" checked={showVolcanoes} onChange={() => setShowVolcanoes(!showVolcanoes)} /> Volcanoes</label></div>
+          <div><label><input type="checkbox" checked={showFloods} onChange={() => setShowFloods(!showFloods)} /> Floods</label></div>
+          <div><label><input type="checkbox" checked={showTsunamis} onChange={() => setShowTsunamis(!showTsunamis)} /> Tsunamis</label></div>
+
+          <div style={{ marginTop: 10 }}><strong>Legend</strong></div>
+          <div><span style={{ color: '#ff0000' }}>●</span> Earthquakes</div>
+          <div><span style={{ color: '#0000ff' }}>●</span> Tornadoes</div>
+          <div><span style={{ color: '#00ff00' }}>●</span> Hurricane</div>
+          <div><span style={{ color: '#ffa500' }}>●</span> Wildfire</div>
+          <div><span style={{ color: '#ffff80' }}>●</span> Planes</div>
+          <div><span style={{ color: '#ff69b4' }}>●</span> Volcanoes</div>
+          <div><span style={{ color: '#00ffff' }}>●</span> Floods</div>
+          <div><span style={{ color: '#800080' }}>●</span> Tsunamis</div>
+
+          <div style={{ marginTop: 10 }}><strong>Data Summary</strong>
+            <div>Earthquakes: {earthquakes.length}</div>
+            <div>Strongest EQ: {strongestEQ}</div>
+            <div>Tornadoes: {tornadoes.length}</div>
+            <div>Hurricanes: {uniqueHurricanes}</div>
+            <div>Wildfires: {wildfires.length}</div>
+            <div>Planes: {planes.length}</div>
+            <div>Volcanoes: {volcanoes.length}</div>
+            <div>Floods: {floods.length}</div>
+            <div>Tsunamis: {tsunamis.length}</div>
+          </div>
+        </div>
+
+        {selectedInfo && <div style={{ position: 'absolute', fontSize: 22, bottom: 60, left: 20, background: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 6, color: 'white' }}>
+          <strong>{selectedInfo.type}</strong>
+          {selectedInfo.lat && <div>Lat: {selectedInfo.lat}</div>}
+          {selectedInfo.lon && <div>Lon: {selectedInfo.lon}</div>}
+          {selectedInfo.magnitude && <div>Magnitude: {selectedInfo.magnitude}</div>}
+          {selectedInfo.title && <div>{selectedInfo.title}</div>}
+          {selectedInfo.callsign && <div>Call Sign: {selectedInfo.callsign}</div>}
+          {selectedInfo.altitude && <div>Altitude: {selectedInfo.altitude}</div>}
+        </div>}
       </div>
 
-      {selectedInfo && <div style={{position:'absolute',fontSize:22,bottom:60,left:20,background:'rgba(0,0,0,0.6)',padding:8,borderRadius:6,color:'white'}}>
-        <strong>{selectedInfo.type}</strong>
-        {selectedInfo.lat && <div>Lat: {selectedInfo.lat}</div>}
-        {selectedInfo.lon && <div>Lon: {selectedInfo.lon}</div>}
-        {selectedInfo.magnitude && <div>Magnitude: {selectedInfo.magnitude}</div>}
-        {selectedInfo.title && <div>{selectedInfo.title}</div>}
-        {selectedInfo.callsign && <div>Call Sign: {selectedInfo.callsign}</div>}
-        {selectedInfo.altitude && <div>Altitude: {selectedInfo.altitude}</div>}
-      </div>}
-    </div>
-
-      <div style={{position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', color: 'white', fontSize: 18, textAlign: 'center'}}>
-        Made by Sebastian Booth | <a href="https://github.com/bidahs/worldwatch" target="_blank" rel="noopener noreferrer" style={{color:'white', textDecoration:'underline'}}>GitHub</a>
+      <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', color: 'white', fontSize: 18, textAlign: 'center' }}>
+        Made by Sebastian Booth | <a href="https://github.com/bidahs" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>GitHub</a>
       </div>
-  </>
+    </>
+  );
 }
 
 export default Globe;

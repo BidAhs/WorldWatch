@@ -1,11 +1,13 @@
 const axios = require("axios");
 
-module.exports = async (req, res) => {
+let cachedData = [];
+
+async function refreshWildfires() {
   try {
     const url = "https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires";
     const { data } = await axios.get(url);
 
-    const result = data.events
+    cachedData = data.events
       .flatMap((event) =>
         event.geometry.map((geo) => ({
           lat: geo.coordinates[1],
@@ -13,10 +15,18 @@ module.exports = async (req, res) => {
           title: event.title,
         })),
       )
-      
+      .slice(50, 210);
 
-    res.json(result);
+    console.log("Wildfire data refreshed");
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch wildfires" });
+    console.error("Failed to refresh wildfire data", err.message);
   }
+}
+
+// Refresh every 5 minutes
+refreshWildfires();
+setInterval(refreshWildfires, 5 * 60 * 1000);
+
+module.exports = (req, res) => {
+  res.json(cachedData);
 };

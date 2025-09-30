@@ -1,24 +1,29 @@
-import express from "express";
 import fetch from "node-fetch";
 
-const router = express.Router();
+let cachedData = [];
+let lastUpdated = 0;
 
-router.get("/", async (req, res) => {
-  try {
-    const response = await fetch("https://floods.globalfloods.eu/api");
-    const data = await response.json();
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-    const floods = data.items.map(f => ({
-      lat: f.latitude,
-      lon: f.longitude,
-      title: "Flood",
-      info: f.description || "Active flood event"
-    }));
+  const now = Date.now();
+  if (!cachedData.length || now - lastUpdated > 5 * 60 * 1000) {
+    try {
+      const response = await fetch("https://floods.globalfloods.eu/api");
+      const data = await response.json();
 
-    res.json(floods);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch flood data" });
+      cachedData = data.items.map(f => ({
+        lat: f.latitude,
+        lon: f.longitude,
+        title: "Flood",
+        info: f.description || "Active flood event"
+      }));
+      lastUpdated = now;
+      console.log("Flood data refreshed");
+    } catch (err) {
+      console.error("Failed to fetch flood data", err.message);
+    }
   }
-});
 
-export default router;
+  res.status(200).json({ data: cachedData });
+}

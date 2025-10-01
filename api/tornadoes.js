@@ -1,49 +1,31 @@
-import axios from "axios";
-import { parse } from "csv-parse/sync";
+import fetch from "node-fetch";
 
 let cachedData = [];
 let lastUpdated = 0;
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  const now = Date.now();
-  if (!cachedData.length || now - lastUpdated > 5 * 60 * 1000) {
-    try {
-      const today = new Date();
-      const urls = [];
-      for (let i = 0; i < 2; i++) { // last 2 days only
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        urls.push(`https://www.spc.noaa.gov/climo/reports/${y}${m}${day}_rpts_torn.csv`);
-      }
-
-      let allRecords = [];
-      for (const url of urls) {
-        try {
-          const { data } = await axios.get(url);
-          const records = parse(data, { columns: true, skip_empty_lines: true });
-          allRecords = allRecords.concat(
-            records.map(r => ({
-              lat: parseFloat(r.LAT),
-              lon: parseFloat(r.LON),
-              location: r.LOCATION || "Unknown",
-              time: r.TIME || "N/A",
-            }))
-          );
-        } catch {}
-      }
-
-      cachedData = allRecords.slice(0, 50); // max 50 tornadoes
-      lastUpdated = now;
-      console.log("Tornado data refreshed");
-    } catch (err) {
-      console.error("Failed to refresh tornado data", err.message);
-    }
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
   }
 
-  res.status(200).json({ data: cachedData });
+  try {
+    const now = Date.now();
+    if (!cachedData.length || now - lastUpdated > 10 * 60 * 1000) {
+      const response = await fetch("https://www.spc.noaa.gov/products/watch/wwa.xml");
+      const text = await response.text();
+      cachedData = [{ raw: text }]; // adjust if you want to parse XML
+      lastUpdated = now;
+      console.log("Tornado data refreshed");
+    }
+
+    res.status(200).json({ data: cachedData });
+  } catch (err) {
+    console.error("API error in tornadoes.js:", err);
+    res.status(500).json({ error: err.message || "Internal server error" });
+  }
 }

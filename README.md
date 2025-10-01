@@ -3,7 +3,7 @@
 **WorldWatch** is an interactive platform that helps people stay informed about global events in real time.  
 It tracks natural disasters and major events such as **earthquakes, hurricanes, tornadoes, wildfires, and even planes in the sky** — all visualized on a 3D interactive globe.  
 
-🔗 **Try it here:** [worldwatch.vercel.app](https://worldwatch.vercel.app)
+🔗 **Try it here:** [world-watch.vercel.app](https://world-watch.vercel.app)
 
 ---
 

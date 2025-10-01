@@ -1,31 +1,82 @@
-import fetch from "node-fetch";
+const { put } = require("@vercel/blob");
+const axios = require("axios");
+const { parse } = require("csv-parse/sync");
 
-let cachedData = [];
-let lastUpdated = 0;
+const BLOB_KEY = "API_Data/tornadoes.json";
+const CACHE_TTL = 20 * 60 * 1000;
 
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+let blobUrl = null;
+let lastModified = null;
 
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
+module.exports = async (req, res) => {
+  const now = Date.now();
+
+  if (blobUrl && lastModified && now - lastModified < CACHE_TTL) {
+    try {
+      const response = await axios.get(blobUrl);
+      console.log("Serving tornado cached data");
+      return res.json(response.data);
+    } catch (err) {
+      // If blob fetch fails, continue to try API
+    }
   }
 
   try {
-    const now = Date.now();
-    if (!cachedData.length || now - lastUpdated > 10 * 60 * 1000) {
-      const response = await fetch("https://www.spc.noaa.gov/products/watch/wwa.xml");
-      const text = await response.text();
-      cachedData = [{ raw: text }]; // adjust if you want to parse XML
-      lastUpdated = now;
-      console.log("Tornado data refreshed");
+    // Fetch tornadoes data
+    const today = new Date();
+    const urls = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      urls.push(
+        `https://www.spc.noaa.gov/climo/reports/${y}${m}${day}_rpts_torn.csv`,
+      );
     }
 
-    res.status(200).json({ data: cachedData });
+    let allRecords = [];
+    for (const url of urls) {
+      try {
+        const { data } = await axios.get(url);
+        const records = parse(data, { columns: true, skip_empty_lines: true });
+        const cleaned = records.map((r) => ({
+          lat: parseFloat(r.LAT),
+          lon: parseFloat(r.LON),
+          location: r.LOCATION || "Unknown",
+          time: r.TIME || "N/A",
+        }));
+        allRecords = allRecords.concat(cleaned);
+      } catch (err) {
+        // Ignore missing data for a day
+      }
+    }
+
+    const { url: uploadedUrl } = await put(
+      BLOB_KEY,
+      JSON.stringify(allRecords),
+      {
+        access: "public",
+        contentType: "application/json",
+        allowOverwrite: true,
+      },
+    );
+    blobUrl = uploadedUrl;
+    lastModified = now;
+    console.log("Tornadoes fetched from API");
+
+    return res.json(allRecords);
   } catch (err) {
-    console.error("API error in tornadoes.js:", err);
-    res.status(500).json({ error: err.message || "Internal server error" });
+    if (blobUrl) {
+      try {
+        const response = await axios.get(blobUrl);
+        console.log("Serving tornado cached data");
+        return res.json(response.data);
+      } catch (blobErr) {
+        // Blob fetch also failed
+      }
+    }
+    return res.status(500).json({ error: "Failed to fetch tornado data" });
   }
-}
+};

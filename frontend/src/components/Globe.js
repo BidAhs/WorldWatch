@@ -161,7 +161,7 @@ function Globe() {
       }
 
       const fires = await fetchWildfires();
-      const trimmed = fires.slice(100, 175);
+      const trimmed = fires.slice(35, 225);
       setWildfires(trimmed);
       wGroup.clear();
       if (showWildfires) {
@@ -209,10 +209,10 @@ function Globe() {
 
         <div style={{marginTop:10}}><strong>Legend</strong></div>
         <div><span style={{color:'#ff0000'}}>●</span> Earthquakes</div>
-        <div><span style={{color:'#0000ff'}}>●</span> Tornado</div>
-        <div><span style={{color:'#00ff00'}}>●</span> Hurricane</div>
-        <div><span style={{color:'#ffa500'}}>●</span> Wildfire</div>
-        <div><span style={{color:'#ffff80'}}>●</span> Plane</div>
+        <div><span style={{color:'#0000ff'}}>●</span> Tornadoes</div>
+        <div><span style={{color:'#00ff00'}}>●</span> Hurricanes</div>
+        <div><span style={{color:'#ffa500'}}>●</span> Wildfires</div>
+        <div><span style={{color:'#ffff80'}}>●</span> Planes</div>
 
         <div style={{marginTop:10}}><strong>Data Summary</strong>
           <div>Earthquakes: {earthquakes.length}</div>

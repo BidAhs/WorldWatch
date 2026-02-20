@@ -17,6 +17,7 @@ function Globe() {
   const [planes, setPlanes] = useState([]);
 
   const uniqueHurricanes = new Set(hurricanes.map((h) => h.title)).size;
+
   const [showEarthquakes, setShowEarthquakes] = useState(true);
   const [showTornadoes, setShowTornadoes] = useState(true);
   const [showWildfires, setShowWildfires] = useState(true);
@@ -35,10 +36,11 @@ function Globe() {
   }
 
   useEffect(() => {
-    if (!mountRef.current) return;
+    const currentMount = mountRef.current;
+    if (!currentMount) return;
 
-    const width = mountRef.current.clientWidth;
-    const height = mountRef.current.clientHeight;
+    const width = currentMount.clientWidth;
+    const height = currentMount.clientHeight;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -46,8 +48,8 @@ function Globe() {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    mountRef.current.innerHTML = ""; 
-    mountRef.current.appendChild(renderer.domElement);
+    currentMount.innerHTML = "";
+    currentMount.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -74,6 +76,7 @@ function Globe() {
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+
     function onClick(e) {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -89,6 +92,7 @@ function Globe() {
       if (hits.length) setSelectedInfo(hits[0].object.userData);
       else setSelectedInfo(null);
     }
+
     renderer.domElement.addEventListener("click", onClick);
 
     let frameId;
@@ -185,8 +189,8 @@ function Globe() {
       cancelAnimationFrame(frameId);
       renderer.domElement.removeEventListener("click", onClick);
 
-      if (mountRef.current?.contains(renderer.domElement)) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (currentMount.contains(renderer.domElement)) {
+        currentMount.removeChild(renderer.domElement);
       }
     };
   }, [showEarthquakes, showTornadoes, showWildfires, showHurricanes, showPlanes]);

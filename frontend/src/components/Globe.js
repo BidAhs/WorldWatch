@@ -240,7 +240,7 @@ function Globe() {
     </div>
 
       <div style={{position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', color: 'white', fontSize: 18, textAlign: 'center'}}>
-        Made by Sebastian Booth | <a href="fluxwebworks.xyz" target="_blank" rel="noopener noreferrer" style={{color:'white', textDecoration:'underline'}}>Flux Webworks</a>
+        Made by Sebastian Booth | <a href="https://fluxwebworks.xyz" target="_blank" rel="noopener noreferrer" style={{color:'white', textDecoration:'underline'}}>Flux Webworks</a>
       </div>
   </>
 }

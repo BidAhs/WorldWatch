@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const y = d.getFullYear();
+      const y = (d.getFullYear() % 100).toString().padStart(2, "0");
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       const url = `https://www.spc.noaa.gov/climo/reports/${y}${m}${day}_rpts_torn.csv`;

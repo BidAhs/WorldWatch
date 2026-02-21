@@ -2,25 +2,31 @@ const axios = require("axios");
 
 module.exports = async (req, res) => {
   try {
-    const response = await axios.get(
-      "https://opensky-network.org/api/states/all",
-    );
-    const states = response.data.states || [];
-    const planes = states
-      .filter((s) => s[5] !== null && s[6] !== null)
+    // Use ADSB.lol free API - no auth, global live aircraft
+    const response = await axios.get("https://api.adsb.lol/v2/ladd", {
+      timeout: 30000,
+    });
+
+    // Response: { ac: [ ... ] }
+    const aircraft = response.data.ac || [];
+
+    const planes = aircraft
+      .filter((p) => p.lat != null && p.lon != null) // Ensure lat/lon present
       .slice(0, 75)
-      .map((s) => ({
-        callsign: s[1] || "Unknown",
-        lat: s[6],
-        lon: s[5],
-        altitude: s[13],
+      .map((p) => ({
+        callsign: (p.flight || p.callsign || "Unknown").trim(),
+        lat: p.lat,
+        lon: p.lon,
+        altitude: p.alt_baro ?? p.alt_geom ?? "N/A", // Use baro altitude, fallback to geometric or N/A
       }));
+
     res.json(planes);
   } catch (err) {
-    console.error("Error fetching planes", {
+    console.error("Error fetching planes from ADSB.lol", {
       message: err.message,
       code: err.code,
-      response: err.response && err.response.data,
+      status: err.response?.status,
+      data: err.response?.data,
     });
     res.status(500).json({ error: "Failed to fetch planes" });
   }

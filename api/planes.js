@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
 
     const planes = aircraft
       .filter((p) => p.lat != null && p.lon != null) // Ensure lat/lon present
-      .slice(0, 175)
+      .slice(0, 350)
       .map((p) => ({
         callsign: (p.flight || p.callsign || "Unknown").trim(),
         lat: p.lat,

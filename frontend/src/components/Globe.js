@@ -154,7 +154,7 @@ function Globe() {
 
           m.userData = {
             type: "Earthquake",
-            time: e.time,
+            e.time,
             magnitude: e.mag,
             lat: e.lat,
             lon: e.lon

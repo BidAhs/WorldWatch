@@ -104,20 +104,32 @@ function Globe() {
     animate();
 
     async function updateData() {
-      const eq = await fetchEarthquakes();
-      setEarthquakes(eq);
-      eqGroup.clear();
-      if (showEarthquakes) {
-        eq.forEach((e) => {
-          const m = new THREE.Mesh(
-            new THREE.SphereGeometry(0.04, 8, 8),
-            new THREE.MeshBasicMaterial({ color: 0xff0000 })
-          );
-          m.position.copy(latLonToVec3(e.lat, e.lon, 5.1));
-          m.userData = { type: "Earthquake", magnitude: e.mag, lat: e.lat, lon: e.lon };
-          eqGroup.add(m);
-        });
-      }
+    const eq = await fetchEarthquakes();
+    setEarthquakes(eq);
+  
+    eqGroup.clear();
+  
+    if (showEarthquakes) {
+      eq.forEach((e) => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(0.04, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+  
+        m.position.copy(latLonToVec3(e.lat, e.lon, 5.1));
+  
+        m.userData = {
+          type: "Earthquake",
+          magnitude: e.mag,
+          lat: e.lat,
+          lon: e.lon,
+          time: e.time 
+        };
+  
+        eqGroup.add(m);
+      });
+    }
+  }
 
       const torns = await fetchTornadoes();
       setTornadoes(torns);

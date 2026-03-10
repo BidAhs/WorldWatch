@@ -154,7 +154,7 @@ function Globe() {
 
           m.userData = {
             type: "Earthquake",
-            e.time,
+            time: e.time,
             magnitude: e.mag,
             lat: e.lat,
             lon: e.lon
@@ -266,7 +266,8 @@ function Globe() {
             type: "Wildfire",
             title: f.title || "Unknown",
             lat: f.lat,
-            lon: f.lon
+            lon: f.lon,
+            time: f.time
           };
 
           wGroup.add(m);

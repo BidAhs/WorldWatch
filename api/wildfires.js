@@ -7,8 +7,8 @@ module.exports = async (req, res) => {
 
     const result = data.events.flatMap((event) =>
       event.geometry.map((geo) => ({
-        lat: geo.coordinates[1],
-        lon: geo.coordinates[0],
+        lat: Math.round(f.geo.coordinates[1] * 100) / 100,
+        lon: Math.round(f.geo.coordinates[0] * 100) / 100,
         title: event.title,
         time: geo.date
       }))
